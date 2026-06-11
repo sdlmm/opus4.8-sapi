@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食と毒の大冒険</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF7EE;
+    --ink:#3A3A4A;
+    --green:#4CAF7D;
+    --green-d:#3C9168;
+    --blue:#5BA9D8;
+    --orange:#F2A03D;
+    --danger:#E2615C;
+    --danger-d:#C84B47;
+    --card:#FFFFFF;
+    --line:#3A3A4A;
+    --shadow:rgba(58,58,74,.18);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Yu Gothic",sans-serif;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(91,169,216,.10) 0 22%, transparent 22%),
+      radial-gradient(circle at 88% 78%, rgba(242,160,61,.10) 0 22%, transparent 22%),
+      var(--paper);
+    color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    padding:16px;min-height:100%;
+  }
+  .stage{
+    width:100%;max-width:560px;background:var(--card);
+    border:4px solid var(--line);border-radius:28px;
+    box-shadow:0 12px 0 var(--shadow);
+    overflow:hidden;position:relative;
+  }
+
+  /* ===== 共通パーツ ===== */
+  .topbar{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 18px;border-bottom:3px dashed #E4DCC8;
+    background:linear-gradient(#FFFDF8,#FBF5E7);
+  }
+  .stage-label{
+    font-weight:900;font-size:14px;color:#fff;background:var(--green);
+    padding:5px 12px;border-radius:999px;border:2px solid var(--green-d);
+    white-space:nowrap;
+  }
+  .hearts{display:flex;gap:4px;margin-left:auto;}
+  .hearts svg{width:26px;height:26px;display:block;}
+  .hp-text{font-weight:700;font-size:13px;color:#9A917C;margin-left:6px;}
+
+  .body{padding:22px 20px 26px;}
+
+  .scene-art{
+    display:flex;justify-content:center;align-items:flex-end;
+    gap:6px;background:linear-gradient(#EAF6F0,#DDF0E6);
+    border:3px solid var(--line);border-radius:22px;
+    padding:14px;margin-bottom:18px;min-height:172px;position:relative;
+  }
+  .scene-art .hero{width:128px;height:128px;}
+  .scene-art .prop{width:104px;height:104px;}
+  .speech{
+    position:absolute;top:10px;left:14px;right:14px;
+    background:#fff;border:3px solid var(--line);border-radius:16px;
+    padding:9px 12px;font-weight:700;font-size:15px;line-height:1.4;
+  }
+  .speech:after{
+    content:"";position:absolute;bottom:-13px;left:34px;
+    width:18px;height:18px;background:#fff;
+    border-right:3px solid var(--line);border-bottom:3px solid var(--line);
+    transform:rotate(45deg);
+  }
+
+  .q-title{
+    font-weight:900;font-size:19px;line-height:1.5;text-align:center;
+    margin-bottom:16px;
+  }
+  .q-title .mark{color:var(--orange);}
+
+  .choices{display:flex;flex-direction:column;gap:12px;}
+  .choice{
+    display:flex;align-items:center;gap:14px;width:100%;
+    background:#fff;border:3px solid var(--line);border-radius:18px;
+    padding:10px 14px;cursor:pointer;font-family:inherit;text-align:left;
+    box-shadow:0 5px 0 var(--shadow);transition:transform .08s, box-shadow .08s;
+  }
+  .choice:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--shadow);}
+  .choice:active{transform:translateY(3px);box-shadow:0 2px 0 var(--shadow);}
+  .choice:focus-visible{outline:4px solid var(--blue);outline-offset:2px;}
+  .choice .ico{width:62px;height:62px;flex:0 0 62px;
+    background:#F4F8F2;border-radius:14px;display:flex;align-items:center;justify-content:center;}
+  .choice .ico svg{width:54px;height:54px;}
+  .choice .label{font-weight:700;font-size:16px;line-height:1.35;}
+  .choice:disabled{cursor:default;opacity:.55;}
+  .choice.is-safe{border-color:var(--green-d);background:#EEFBF3;opacity:1;}
+  .choice.is-bad{border-color:var(--danger-d);background:#FDEEEC;opacity:1;}
+
+  /* ===== けっか表示 ===== */
+  .result{
+    margin-top:18px;border-radius:20px;border:3px solid var(--line);
+    padding:16px 16px 18px;animation:pop .25s ease;
+  }
+  @keyframes pop{from{transform:scale(.94);opacity:0;}to{transform:scale(1);opacity:1;}}
+  .result.ok{background:#EAF8F0;}
+  .result.ng{background:#FCEDEB;}
+  .result-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .result-head svg{width:40px;height:40px;}
+  .result-head .word{font-weight:900;font-size:20px;}
+  .result.ok .word{color:var(--green-d);}
+  .result.ng .word{color:var(--danger-d);}
+  .result p{font-weight:500;font-size:15px;line-height:1.65;}
+  .result .keyword{font-weight:900;color:var(--orange);}
+
+  .next-btn,.start-btn{
+    display:block;width:100%;margin-top:18px;
+    font-family:inherit;font-weight:900;font-size:18px;color:#fff;
+    background:var(--orange);border:3px solid #D9852A;border-radius:16px;
+    padding:13px;cursor:pointer;box-shadow:0 5px 0 #C9791F;
+    transition:transform .08s, box-shadow .08s;
+  }
+  .next-btn:hover,.start-btn:hover{transform:translateY(-2px);box-shadow:0 7px 0 #C9791F;}
+  .next-btn:active,.start-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #C9791F;}
+  .next-btn:focus-visible,.start-btn:focus-visible{outline:4px solid var(--blue);outline-offset:2px;}
+
+  /* ===== タイトル / エンディング ===== */
+  .screen{padding:30px 24px 34px;text-align:center;}
+  .badge-top{font-weight:900;font-size:14px;color:var(--green-d);letter-spacing:2px;margin-bottom:6px;}
+  .title{font-weight:900;line-height:1.2;}
+  .title .big{font-size:38px;display:block;}
+  .title .sub{font-size:21px;color:var(--blue);display:block;margin-top:2px;}
+  .title-art{width:188px;height:188px;margin:14px auto 6px;}
+  .lead{font-weight:700;font-size:15px;line-height:1.7;margin:8px auto 4px;max-width:400px;}
+  .rules{
+    text-align:left;background:#F4F8F2;border:3px solid var(--line);
+    border-radius:16px;padding:14px 16px;margin:16px auto 4px;max-width:420px;
+    font-weight:500;font-size:14px;line-height:1.7;
+  }
+  .rules b{color:var(--danger-d);}
+
+  .end-art{width:170px;height:170px;margin:6px auto 4px;}
+  .rank{font-weight:900;font-size:26px;margin:4px 0;}
+  .rank.s{color:var(--orange);}
+  .rank.a{color:var(--green-d);}
+  .rank.b{color:var(--blue);}
+  .end-msg{font-weight:700;font-size:15px;line-height:1.7;max-width:420px;margin:6px auto 0;}
+  .culture{
+    background:#FFF6E6;border:3px solid var(--line);border-radius:16px;
+    padding:14px 16px;margin:16px auto 0;max-width:430px;text-align:left;
+    font-weight:500;font-size:14px;line-height:1.7;
+  }
+  .culture .ttl{font-weight:900;color:var(--orange);display:block;margin-bottom:4px;}
+
+  @media (max-width:420px){
+    .title .big{font-size:31px;}
+    .q-title{font-size:17px;}
+    .choice .label{font-size:15px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage" role="application" aria-label="食と毒の大冒険ゲーム"></div>
+
+<!-- ===== SVGイラスト定義 ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+
+<!-- 主人公 たべ太（げんき） -->
+<g id="hero-happy">
+  <ellipse cx="60" cy="112" rx="34" ry="12" fill="#000" opacity=".08"/>
+  <path d="M30 70 q-6 28 6 38 q24 10 48 0 q12-10 6-38z" fill="#4CAF7D" stroke="#3A3A4A" stroke-width="3.5"/>
+  <rect x="46" y="92" width="28" height="16" rx="6" fill="#fff" stroke="#3A3A4A" stroke-width="3"/>
+  <circle cx="60" cy="48" r="30" fill="#FCE4C4" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M28 40 q4-26 32-26 t32 26 q-10-8-32-8 t-32 8z" fill="#F2A03D" stroke="#3A3A4A" stroke-width="3.5"/>
+  <rect x="44" y="18" width="32" height="9" rx="4" fill="#E2615C" stroke="#3A3A4A" stroke-width="3"/>
+  <circle cx="50" cy="50" r="4.2" fill="#3A3A4A"/>
+  <circle cx="70" cy="50" r="4.2" fill="#3A3A4A"/>
+  <circle cx="51.5" cy="48.5" r="1.4" fill="#fff"/>
+  <circle cx="71.5" cy="48.5" r="1.4" fill="#fff"/>
+  <circle cx="40" cy="58" r="5" fill="#F6B6B0" opacity=".8"/>
+  <circle cx="80" cy="58" r="5" fill="#F6B6B0" opacity=".8"/>
+  <path d="M52 60 q8 7 16 0" fill="none" stroke="#3A3A4A" stroke-width="3" stroke-linecap="round"/>
+</g>
+
+<!-- 主人公 たべ太（ダメージ） -->
+<g id="hero-hurt">
+  <ellipse cx="60" cy="112" rx="34" ry="12" fill="#000" opacity=".08"/>
+  <path d="M30 70 q-6 28 6 38 q24 10 48 0 q12-10 6-38z" fill="#4CAF7D" stroke="#3A3A4A" stroke-width="3.5"/>
+  <rect x="46" y="92" width="28" height="16" rx="6" fill="#fff" stroke="#3A3A4A" stroke-width="3"/>
+  <circle cx="60" cy="48" r="30" fill="#F2D9BC" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M28 40 q4-26 32-26 t32 26 q-10-8-32-8 t-32 8z" fill="#F2A03D" stroke="#3A3A4A" stroke-width="3.5"/>
+  <rect x="44" y="18" width="32" height="9" rx="4" fill="#E2615C" stroke="#3A3A4A" stroke-width="3"/>
+  <path d="M44 46 l12 8 M56 46 l-12 8" stroke="#3A3A4A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M64 46 l12 8 M76 46 l-12 8" stroke="#3A3A4A" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="60" cy="64" rx="6" ry="5" fill="#3A3A4A"/>
+  <path d="M86 40 q7 2 8 10 q1 6-4 9" fill="none" stroke="#5BA9D8" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="90" cy="64" r="3" fill="#5BA9D8"/>
+</g>
+
+<!-- ハート（あり） -->
+<g id="heart-full">
+  <path d="M50 86 C18 60 8 40 8 26 C8 12 18 6 28 6 C38 6 46 14 50 22 C54 14 62 6 72 6 C82 6 92 12 92 26 C92 40 82 60 50 86Z"
+        fill="#E2615C" stroke="#3A3A4A" stroke-width="6"/>
+  <path d="M30 22 q8-6 14 2" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".7"/>
+</g>
+<!-- ハート（なし） -->
+<g id="heart-empty">
+  <path d="M50 86 C18 60 8 40 8 26 C8 12 18 6 28 6 C38 6 46 14 50 22 C54 14 62 6 72 6 C82 6 92 12 92 26 C92 40 82 60 50 86Z"
+        fill="#EDE7D8" stroke="#B8AE96" stroke-width="6"/>
+</g>
+
+<!-- まる（せいかい） -->
+<g id="mark-ok">
+  <circle cx="40" cy="40" r="32" fill="none" stroke="#3C9168" stroke-width="8"/>
+</g>
+<!-- ばつ（ダメージ） -->
+<g id="mark-ng">
+  <path d="M18 18 L62 62 M62 18 L18 62" stroke="#C84B47" stroke-width="8" stroke-linecap="round"/>
+</g>
+
+<!-- じゃがいも（ふつう） -->
+<g id="potato-ok">
+  <path d="M22 50 q-8-24 18-30 q30-8 38 14 q8 24-14 36 q-30 14-42-20z" fill="#C99A5B" stroke="#3A3A4A" stroke-width="3.5"/>
+  <ellipse cx="40" cy="36" rx="3.5" ry="2.4" fill="#9C7339"/>
+  <ellipse cx="58" cy="48" rx="3.5" ry="2.4" fill="#9C7339"/>
+  <ellipse cx="46" cy="58" rx="3.5" ry="2.4" fill="#9C7339"/>
+  <ellipse cx="34" cy="50" rx="3" ry="2" fill="#9C7339"/>
+  <circle cx="44" cy="44" r="3" fill="#3A3A4A"/>
+  <circle cx="56" cy="42" r="3" fill="#3A3A4A"/>
+  <path d="M46 52 q5 4 10 0" fill="none" stroke="#3A3A4A" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<!-- じゃがいも（みどり・芽） きけん -->
+<g id="potato-bad">
+  <path d="M22 52 q-8-24 18-30 q30-8 38 14 q8 24-14 36 q-30 14-42-20z" fill="#B7C16A" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M30 30 q-6-12 0-18 M30 30 q-10-6-14-2 M30 30 q-2-12 8-12" fill="none" stroke="#7FA64B" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M60 28 q4-12 12-12 M60 28 q10-4 12 2" fill="none" stroke="#7FA64B" stroke-width="3.5" stroke-linecap="round"/>
+  <ellipse cx="44" cy="50" rx="3.5" ry="2.4" fill="#6E8A3C"/>
+  <ellipse cx="56" cy="56" rx="3.5" ry="2.4" fill="#6E8A3C"/>
+  <circle cx="42" cy="46" r="3" fill="#3A3A4A"/>
+  <circle cx="58" cy="46" r="3" fill="#3A3A4A"/>
+  <path d="M46 56 q4-4 8 0" fill="none" stroke="#3A3A4A" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+
+<!-- しいたけ（おみせ・あんしん） -->
+<g id="mush-ok">
+  <rect x="36" y="44" width="12" height="26" rx="5" fill="#F1E4C8" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M16 44 q26-30 52 0 q-26 12-52 0z" fill="#9C6B43" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M26 38 q4-4 8 0 M44 33 q4-3 8 1 M55 40 q3-3 6 0" fill="none" stroke="#5E3F26" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="36" cy="56" r="2.4" fill="#3A3A4A"/>
+  <circle cx="48" cy="56" r="2.4" fill="#3A3A4A"/>
+  <path d="M39 62 q3 3 6 0" fill="none" stroke="#3A3A4A" stroke-width="2.2" stroke-linecap="round"/>
+</g>
+<!-- 知らないきのこ（きけん） -->
+<g id="mush-wild">
+  <rect x="35" y="46" width="13" height="26" rx="5" fill="#E9E0CC" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M16 46 q25-26 50 0 q-25 11-50 0z" fill="#C7A36E" stroke="#3A3A4A" stroke-width="3.5"/>
+  <text x="41" y="40" font-family="Zen Maru Gothic,sans-serif" font-size="20" font-weight="900" fill="#C84B47" text-anchor="middle">?</text>
+</g>
+<!-- 赤い毒きのこ（きけん） -->
+<g id="mush-poison">
+  <rect x="35" y="46" width="13" height="26" rx="5" fill="#F4ECDA" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M14 47 q27-30 54 0 q-27 12-54 0z" fill="#E2615C" stroke="#3A3A4A" stroke-width="3.5"/>
+  <circle cx="28" cy="38" r="3.4" fill="#fff"/>
+  <circle cx="42" cy="32" r="4" fill="#fff"/>
+  <circle cx="55" cy="38" r="3.4" fill="#fff"/>
+  <circle cx="48" cy="42" r="2.8" fill="#fff"/>
+</g>
+
+<!-- パン（やけたて） -->
+<g id="bread-ok">
+  <path d="M20 40 q22-22 44 0 v22 a4 4 0 0 1-4 4 H24 a4 4 0 0 1-4-4 z" fill="#E8B96A" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M24 44 q18-15 36 0" fill="#F6E0AE" stroke="none"/>
+  <circle cx="34" cy="54" r="2.6" fill="#3A3A4A"/>
+  <circle cx="50" cy="54" r="2.6" fill="#3A3A4A"/>
+  <path d="M38 60 q4 4 8 0" fill="none" stroke="#3A3A4A" stroke-width="2.4" stroke-linecap="round"/>
+</g>
+<!-- パン（カビ） きけん -->
+<g id="bread-bad">
+  <path d="M20 40 q22-22 44 0 v22 a4 4 0 0 1-4 4 H24 a4 4 0 0 1-4-4 z" fill="#D9AC5E" stroke="#3A3A4A" stroke-width="3.5"/>
+  <circle cx="32" cy="50" r="6" fill="#6FAE7A"/>
+  <circle cx="32" cy="50" r="3" fill="#3F7A54"/>
+  <circle cx="50" cy="46" r="5" fill="#7E8FB5"/>
+  <circle cx="50" cy="46" r="2.6" fill="#4D5C86"/>
+  <circle cx="44" cy="60" r="4.5" fill="#6FAE7A"/>
+  <circle cx="58" cy="58" r="3.5" fill="#7E8FB5"/>
+  <path d="M28 46 l-3-4 M36 46 l3-4 M48 41 l-2-4 M54 42 l3-4" stroke="#3F7A54" stroke-width="2" stroke-linecap="round"/>
+</g>
+
+<!-- ニラ（あんしん） -->
+<g id="nira-ok">
+  <path d="M40 72 q-12-40-2-58 M40 72 q-4-44 4-58 M40 72 q4-42 12-54 M40 72 q10-36 18-46"
+        fill="none" stroke="#5AA85F" stroke-width="6" stroke-linecap="round"/>
+  <path d="M30 70 h22 a4 4 0 0 1 0 8 H30 a4 4 0 0 1 0-8z" fill="#E2615C" stroke="#3A3A4A" stroke-width="3"/>
+</g>
+<!-- スイセン（きけん：ニラとそっくり） -->
+<g id="suisen-bad">
+  <path d="M42 70 q-12-40-2-56 M42 70 q-2-44 6-56 M42 70 q8-40 16-50"
+        fill="none" stroke="#6FB36B" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="55" cy="22" r="10" fill="#FFE08A" stroke="#3A3A4A" stroke-width="3"/>
+  <circle cx="55" cy="22" r="4" fill="#F2A03D"/>
+  <path d="M36 70 q-8 6-4 12 q12 4 18-2" fill="#D9C49A" stroke="#3A3A4A" stroke-width="3"/>
+</g>
+
+<!-- やき魚（骨） -->
+<g id="fish">
+  <path d="M14 44 q22-20 48-4 q10 6 14-2 q-2 14-14 14 q-26 16-48-8z" fill="#9FC4D6" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M26 44 h28 M40 32 v24" stroke="#7196AB" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="24" cy="40" r="3" fill="#3A3A4A"/>
+  <path d="M16 64 q24 8 44 0" fill="none" stroke="#3A3A4A" stroke-width="3" stroke-linecap="round"/>
+</g>
+<!-- フグ -->
+<g id="puffer">
+  <circle cx="40" cy="46" r="26" fill="#F4D38C" stroke="#3A3A4A" stroke-width="3.5"/>
+  <path d="M64 38 l12-6 v28 l-12-6z" fill="#EBB95E" stroke="#3A3A4A" stroke-width="3.5"/>
+  <circle cx="30" cy="40" r="4" fill="#3A3A4A"/>
+  <circle cx="31.5" cy="38.5" r="1.4" fill="#fff"/>
+  <path d="M20 52 q8 6 16 0" fill="none" stroke="#3A3A4A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M40 22 v-6 M52 26 l4-5 M28 26 l-4-5 M18 44 l-7 0 M22 60 l-5 4 M58 56 l5 3" stroke="#3A3A4A" stroke-width="3" stroke-linecap="round"/>
+</g>
+
+</defs>
+</svg>
+
+<script>
+/* ====== ヘルパー ====== */
+const $ = (sel,el=document)=>el.querySelector(sel);
+function svg(id, cls=""){
+  const box = {
+    'hero-happy':'0 0 120 120','hero-hurt':'0 0 120 120',
+    'heart-full':'0 0 100 92','heart-empty':'0 0 100 92',
+    'mark-ok':'0 0 80 80','mark-ng':'0 0 80 80',
+    'potato-ok':'0 0 96 96','potato-bad':'0 0 96 96',
+    'mush-ok':'0 0 84 84','mush-wild':'0 0 84 84','mush-poison':'0 0 84 84',
+    'bread-ok':'0 0 84 84','bread-bad':'0 0 84 84',
+    'nira-ok':'0 0 80 84','suisen-bad':'0 0 84 84',
+    'fish':'0 0 84 84','puffer':'0 0 84 84'
+  }[id] || '0 0 120 120';
+  return `<svg class="${cls}" viewBox="${box}" aria-hidden="true"><use href="#${id}"/></svg>`;
+}
+
+/* ====== ゲームデータ ====== */
+const MAX_HP = 5;
+const QUESTIONS = [
+  {
+    place:"森の入り口",
+    sceneProp:"potato-ok",
+    speech:"おいしそうなじゃがいもを見つけた！",
+    q:"食べても<span class='mark'>あんしん</span>なのはどれ？",
+    choices:[
+      {svg:"potato-ok", label:"茶色いふつうのじゃがいも", safe:true},
+      {svg:"potato-bad", label:"皮がみどり色で芽が出たもの", safe:false}
+    ],
+    okWord:"せいかい！",
+    ok:"よく見たね。じゃがいもの<span class='keyword'>芽</span>やみどり色の皮には「ソラニン」という毒があるんだ。だから、お家では芽をしっかり取って、皮があおいところは食べないようにしているよ。",
+    ngWord:"おなかいたい！",
+    ng:"じゃがいもの<span class='keyword'>芽</span>やみどり色の皮には「ソラニン」という毒があるよ。食べると、おなかがいたくなることがあるんだ。芽は取りのぞいて食べようね。"
+  },
+  {
+    place:"きのこの林",
+    sceneProp:"mush-poison",
+    speech:"いろんなきのこが生えている…",
+    q:"安心して食べられるのはどれ？",
+    choices:[
+      {svg:"mush-ok", label:"お店で売っているしいたけ", safe:true},
+      {svg:"mush-poison", label:"林に生えた赤いきのこ", safe:false},
+      {svg:"mush-wild", label:"名前を知らないきのこ", safe:false}
+    ],
+    okWord:"せいかい！",
+    ok:"そのとおり。<span class='keyword'>野生のきのこ</span>には毒を持つものが多くて、見た目だけでは大人でも見分けるのがむずかしいんだ。だから、お店で売っているものを選ぶのが一番あんしんだよ。",
+    ngWord:"ふらふら…",
+    ng:"<span class='keyword'>野生のきのこ</span>には毒を持つものがたくさんあるよ。「きれい」「おいしそう」でも、見た目で安全かどうかは決められないんだ。知らないきのこは、ぜったいに口に入れないでね。"
+  },
+  {
+    place:"お家のだいどころ",
+    sceneProp:"bread-bad",
+    speech:"パンに何かついている…どうしよう？",
+    q:"<span class='mark'>正しい</span>のはどれ？",
+    choices:[
+      {svg:"bread-bad", label:"カビの部分だけ取って食べる", safe:false},
+      {svg:"bread-ok", label:"食べずにすてる", safe:true}
+    ],
+    okWord:"せいかい！",
+    ok:"えらい判断。<span class='keyword'>カビ</span>は目に見えない細い糸を、パンの中までのばしているんだ。見えるところを取っても中に残っているから、もったいないけれど食べずにすてるのが安全だよ。",
+    ngWord:"うっ…",
+    ng:"<span class='keyword'>カビ</span>は、目に見えない細い糸をパンの中までのばしているよ。見える部分を取っても中に残っているから、おなかをこわすことがあるんだ。カビが生えたら食べずにすてようね。"
+  },
+  {
+    place:"うらの畑",
+    sceneProp:"suisen-bad",
+    speech:"細長い葉っぱ。料理に使えるのは？",
+    q:"食べても安心なのはどっち？",
+    choices:[
+      {svg:"nira-ok", label:"ニラ（おなじみの野菜）", safe:true},
+      {svg:"suisen-bad", label:"スイセンの葉っぱ", safe:false}
+    ],
+    okWord:"せいかい！",
+    ok:"ばっちり。じつは<span class='keyword'>スイセン</span>の葉はニラにそっくりで、まちがえて食べてしまう事故が本当にあるんだ。「自分で見分けられそう」と思っても、知らない植物は食べないのが約束だよ。",
+    ngWord:"くらくら…",
+    ng:"<span class='keyword'>スイセン</span>はニラにそっくりだけど毒があるんだ。にているからこそ、まちがえて食べる事故が起きてしまう。植物は「育てた人がわかっているもの」だけを食べようね。"
+  },
+  {
+    place:"夕ごはんのテーブル",
+    sceneProp:"fish",
+    speech:"焼き魚だ！どうやって食べる？",
+    q:"<span class='mark'>正しい</span>食べ方はどれ？",
+    choices:[
+      {svg:"fish", label:"骨をよけて、身を食べる", safe:true},
+      {svg:"fish", label:"骨ごとガブッと食べる", safe:false}
+    ],
+    okWord:"せいかい！",
+    ok:"いいね。魚の<span class='keyword'>骨</span>は食べられない部分（不可食部）。のどに刺さると痛いし、あぶないんだ。よくかんで、骨をていねいによけながら食べよう。",
+    ngWord:"のどがいたい！",
+    ng:"魚の<span class='keyword'>骨</span>は食べられない部分（不可食部）だよ。のどに刺さると、とても痛くてあぶないんだ。あわてず、骨をよけながらよくかんで食べようね。"
+  },
+  {
+    place:"海べの食どう",
+    sceneProp:"puffer",
+    speech:"フグ料理だ！食べてもいいのは？",
+    q:"安心して食べられるのはどっち？",
+    choices:[
+      {svg:"puffer", label:"免許を持つ料理人が作ったフグ", safe:true},
+      {svg:"puffer", label:"自分でつって自分でさばいたフグ", safe:false}
+    ],
+    okWord:"せいかい！ ゴール！",
+    ok:"その通り。<span class='keyword'>フグ</span>には強い毒があって、毒のない部分だけを取り分けるには特別な免許がいるんだ。だから、ちゃんと勉強した料理人が作ったものだけが食べられるんだよ。",
+    ngWord:"ばたっ…",
+    ng:"<span class='keyword'>フグ</span>には強い毒があって、安全に料理するには特別な免許が必要なんだ。免許のない人がさばいたフグはとてもあぶないよ。お店で、料理人が作ったものを食べようね。"
+  }
+];
+
+/* ====== ステート ====== */
+let state = { idx:0, hp:MAX_HP, answered:false };
+
+/* ====== 画面えがき ====== */
+const stage = $('#stage');
+
+function heartsHTML(){
+  let h="";
+  for(let i=0;i<MAX_HP;i++){
+    h += svg(i < state.hp ? 'heart-full' : 'heart-empty');
+  }
+  return `<div class="hearts" aria-label="げんき ${state.hp} / ${MAX_HP}">${h}<span class="hp-text">げんき</span></div>`;
+}
+
+function renderTitle(){
+  stage.innerHTML = `
+    <div class="screen">
+      <div class="badge-top">食と毒の こうざ ゲーム</div>
+      <h1 class="title"><span class="big">食と毒の大冒険</span><span class="sub">〜きみは食マスターになれるか〜</span></h1>
+      <div class="title-art">${svg('hero-happy')}</div>
+      <p class="lead">主人公の<b>たべ太</b>といっしょに「食の国」をたんけんしよう。<br>食べものには、ときどき<b>毒</b>がかくれているよ。</p>
+      <div class="rules">
+        <div>あそびかた</div>
+        ・たべ太の<b>げんきハートは5こ</b>。<br>
+        ・あぶないものを選ぶと、ハートが1つへるよ。<br>
+        ・ぜんぶで6つの食べものクイズに挑戦！<br>
+        ・ハートをのこして、ゴールを目ざそう。
+      </div>
+      <button class="start-btn" id="startBtn">冒険をはじめる</button>
+    </div>`;
+  $('#startBtn').onclick = ()=>{ state={idx:0,hp:MAX_HP,answered:false}; renderQuestion(); };
+}
+
+function renderQuestion(){
+  const item = QUESTIONS[state.idx];
+  state.answered = false;
+  stage.innerHTML = `
+    <div class="topbar">
+      <span class="stage-label">ステージ ${state.idx+1} / ${QUESTIONS.length}・${item.place}</span>
+      ${heartsHTML()}
+    </div>
+    <div class="body">
+      <div class="scene-art">
+        <div class="speech">${item.speech}</div>
+        ${svg('hero-happy','hero')}
+        ${svg(item.sceneProp,'prop')}
+      </div>
+      <h2 class="q-title">${item.q}</h2>
+      <div class="choices" id="choices"></div>
+      <div id="resultArea"></div>
+    </div>`;
+
+  const wrap = $('#choices');
+  // 選択肢の順番をシャッフル
+  const order = item.choices.map((c,i)=>i);
+  for(let i=order.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [order[i],order[j]]=[order[j],order[i]]; }
+  order.forEach(i=>{
+    const c = item.choices[i];
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.innerHTML = `<span class="ico">${svg(c.svg)}</span><span class="label">${c.label}</span>`;
+    btn.onclick = ()=>handleAnswer(c, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function handleAnswer(choice, btn){
+  if(state.answered) return;
+  state.answered = true;
+  const item = QUESTIONS[state.idx];
+
+  // ボタンを全部とめる＆色づけ
+  $('#choices').querySelectorAll('.choice').forEach((b,i)=>{
+    b.disabled = true;
+  });
+  btn.classList.add(choice.safe ? 'is-safe' : 'is-bad');
+
+  // ダメージ処理＆ハート更新
+  if(!choice.safe){
+    state.hp = Math.max(0, state.hp - 1);
+    // ハート再描画
+    const old = stage.querySelector('.hearts');
+    if(old){ old.outerHTML = heartsHTML(); }
+    // たべ太をダメージ顔に
+    const hero = stage.querySelector('.scene-art .hero use');
+    if(hero){ hero.setAttribute('href','#hero-hurt'); }
+  }
+
+  const ok = choice.safe;
+  const result = document.createElement('div');
+  result.className = 'result ' + (ok?'ok':'ng');
+  result.innerHTML = `
+    <div class="result-head">
+      ${svg(ok?'mark-ok':'mark-ng')}
+      <span class="word">${ok?item.okWord:item.ngWord}</span>
+    </div>
+    <p>${ok?item.ok:item.ng}</p>
+    <button class="next-btn" id="nextBtn">${state.idx < QUESTIONS.length-1 ? 'つぎへ すすむ' : 'けっかを見る'}</button>`;
+  $('#resultArea').appendChild(result);
+  result.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  $('#nextBtn').onclick = ()=>{
+    if(state.idx < QUESTIONS.length-1){ state.idx++; renderQuestion(); }
+    else { renderEnding(); }
+  };
+}
+
+function renderEnding(){
+  let rank, cls, art, msg;
+  if(state.hp === MAX_HP){
+    rank="食マスター！"; cls="s"; art="hero-happy";
+    msg="ノーダメージでゴール！ 食べものにかくれた毒を、ぜんぶ見ぬいたね。きみはもう立派な食マスターだ。";
+  }else if(state.hp >= 3){
+    rank="食ハカセ"; cls="a"; art="hero-happy";
+    msg="あぶないところもあったけれど、しっかりゴール！ きょうおぼえたことを、お家の人にも教えてあげよう。";
+  }else if(state.hp >= 1){
+    rank="食みならい"; cls="b"; art="hero-happy";
+    msg="ゴールできたね！ 食べものには毒がかくれていることがある、とわかったのが大きな一歩。もう一回ちょうせんしてみよう。";
+  }else{
+    rank="また ちょうせん！"; cls="b"; art="hero-hurt";
+    msg="ハートがなくなっちゃった…。でも、どれがあぶないかを知ったきみは、もう前のきみとはちがうよ。もう一度たんけんしてみよう。";
+  }
+
+  stage.innerHTML = `
+    <div class="screen">
+      <div class="badge-top">けっか はっぴょう</div>
+      <div class="end-art">${svg(art)}</div>
+      <div class="rank ${cls}">${rank}</div>
+      <p style="font-weight:700">のこったげんき ${state.hp} / ${MAX_HP}</p>
+      <div class="hearts" style="justify-content:center;margin:8px 0 0">${(()=>{let h="";for(let i=0;i<MAX_HP;i++)h+=svg(i<state.hp?'heart-full':'heart-empty');return h;})()}</div>
+      <p class="end-msg">${msg}</p>
+      <div class="culture">
+        <span class="ttl">わかったこと ―「食文化」って？</span>
+        毒のある食べもの、いたんだりカビたりした食べもの、食べられない部分（骨や皮）…。
+        わたしたちのご先祖さまは、長い時間をかけて「どれが食べられて、どれがあぶないか」を見つけ、
+        調理のしかたや約束ごとを作ってきたんだ。それが<b style="color:#3C9168">「食文化」</b>。
+        ふだんのご飯は、たくさんの知恵に守られているんだね。
+      </div>
+      <button class="start-btn" id="againBtn">もう一度 あそぶ</button>
+    </div>`;
+  $('#againBtn').onclick = renderTitle;
+}
+
+/* ====== スタート ====== */
+renderTitle();
+</script>
+</body>
+</html>
